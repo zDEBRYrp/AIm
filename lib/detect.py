@@ -52,18 +52,18 @@ DEFAULT_CONFIG = {
 }
 
 SETTING_ITEMS = [
-    ("1", "confidence", "Confidence (0.05-0.95)"),
+    ("1", "confidence", "Уверенность (0.05-0.95)"),
     ("2", "iou_threshold", "NMS IoU (0.1-0.9)"),
-    ("3", "activation_range", "FOV size px or 'full'"),
-    ("4", "aim_speed", "Aim speed (0.05-2.0)"),
-    ("5", "max_step", "Max step px/frame (1-200)"),
-    ("6", "deadzone", "Deadzone px (0-50)"),
-    ("7", "aim_height_ratio", "Aim height 0-1 (0.2=head)"),
-    ("H", "hold_button", "Hold button (x2/left/right)"),
-    ("T", "toggle_hotkey", "Toggle hotkey (e.g. F1)"),
-    ("F", "fullscreen", "Fullscreen capture (y/n)"),
-    ("D", "detector_only", "Detector-only video mode (y/n)"),
-    ("M", "monitor", "Monitor (primary or 0/1/...)"),
+    ("3", "activation_range", "FOV размер px или 'full'"),
+    ("4", "aim_speed", "Скорость аима (0.05-2.0)"),
+    ("5", "max_step", "Макс шаг px/кадр (1-200)"),
+    ("6", "deadzone", "Мёртвая зона px (0-50)"),
+    ("7", "aim_height_ratio", "Высота прицела 0-1 (0.2=голова)"),
+    ("H", "hold_button", "Кнопка hold (x2/left/right)"),
+    ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)"),
+    ("F", "fullscreen", "Захват всего экрана (y/n)"),
+    ("D", "detector_only", "Только детектор без аима (y/n)"),
+    ("M", "monitor", "Монитор (primary или 0/1/...)"),
 ]
 
 
@@ -91,33 +91,33 @@ def coerce_value(key, text):
     try:
         if key == "confidence":
             v = float(t)
-            return (True, v, "") if 0.05 <= v <= 0.95 else (False, None, "Range 0.05-0.95")
+            return (True, v, "") if 0.05 <= v <= 0.95 else (False, None, "Диапазон 0.05-0.95")
         if key == "iou_threshold":
             v = float(t)
-            return (True, v, "") if 0.1 <= v <= 0.9 else (False, None, "Range 0.1-0.9")
+            return (True, v, "") if 0.1 <= v <= 0.9 else (False, None, "Диапазон 0.1-0.9")
         if key == "activation_range":
             if t.lower() == "full":
                 return (True, "full", "")
             v = int(float(t))
-            return (True, v, "") if 64 <= v <= 1000 else (False, None, "Range 64-1000 or 'full'")
+            return (True, v, "") if 64 <= v <= 1000 else (False, None, "Диапазон 64-1000 or 'full'")
         if key == "aim_speed":
             v = float(t)
-            return (True, v, "") if 0.05 <= v <= 2.0 else (False, None, "Range 0.05-2.0")
+            return (True, v, "") if 0.05 <= v <= 2.0 else (False, None, "Диапазон 0.05-2.0")
         if key == "max_step":
             v = int(float(t))
-            return (True, v, "") if 1 <= v <= 200 else (False, None, "Range 1-200")
+            return (True, v, "") if 1 <= v <= 200 else (False, None, "Диапазон 1-200")
         if key == "deadzone":
             v = int(float(t))
-            return (True, v, "") if 0 <= v <= 50 else (False, None, "Range 0-50")
+            return (True, v, "") if 0 <= v <= 50 else (False, None, "Диапазон 0-50")
         if key == "aim_height_ratio":
             v = float(t)
-            return (True, v, "") if 0.0 <= v <= 1.0 else (False, None, "Range 0.0-1.0")
+            return (True, v, "") if 0.0 <= v <= 1.0 else (False, None, "Диапазон 0.0-1.0")
         if key == "hold_button":
             v = t.lower()
-            return (True, v, "") if v in ("x2", "left", "right") else (False, None, "Use x2 / left / right")
+            return (True, v, "") if v in ("x2", "left", "right") else (False, None, "Используй x2 / left / right")
         if key == "toggle_hotkey":
             if not t:
-                return (False, None, "Empty hotkey")
+                return (False, None, "Пустой хоткей")
             keyboard.parse_hotkey(t.lower())
             return (True, t.lower(), "")
         if key == "fullscreen":
@@ -126,25 +126,25 @@ def coerce_value(key, text):
                 return (True, True, "")
             if v in ("n", "no", "false", "0", "off"):
                 return (True, False, "")
-            return (False, None, "Use y/n")
+            return (False, None, "Введи y/n")
         if key == "detector_only":
             v = t.lower()
             if v in ("y", "yes", "true", "1", "on"):
                 return (True, True, "")
             if v in ("n", "no", "false", "0", "off"):
                 return (True, False, "")
-            return (False, None, "Use y/n")
+            return (False, None, "Введи y/n")
         if key == "monitor":
             if t.lower() == "primary":
                 return (True, "primary", "")
             v = int(t)
             n = len(list_monitors())
-            return (True, v, "") if 0 <= v < n else (False, None, f"Monitor 0-{n - 1} or 'primary'")
+            return (True, v, "") if 0 <= v < n else (False, None, f"Монитор 0-{n - 1} или 'primary'")
     except ValueError:
-        return (False, None, "Invalid number")
+        return (False, None, "Не число")
     except Exception as e:
-        return (False, None, f"Invalid value: {e}")
-    return (False, None, "Unknown setting")
+        return (False, None, f"Неверное значение: {e}")
+    return (False, None, "Неизвестная настройка")
 
 
 def console_focused():
@@ -164,12 +164,12 @@ def _select_monitor():
     if isinstance(choice, int):
         set_monitor(choice)
     for m in list_monitors():
-        tag = " [PRIMARY]" if m["primary"] else ""
-        print(f"\033[1;36m[Monitor {m['index']}] {m['width']}x{m['height']} at ({m['left']},{m['top']}){tag}")
+        tag = " [ОСНОВНОЙ]" if m["primary"] else ""
+        print(f"\033[1;36m[Монитор {m['index']}] {m['width']}x{m['height']} at ({m['left']},{m['top']}){tag}")
     Wd, Hd = get_screen_size()
     MON_X, MON_Y = get_monitor_origin()
     VWd, VHd = get_virtual_size()
-    print(f"\033[1;32m[Status] Capture: {Wd}x{Hd} at ({MON_X},{MON_Y}); virtual screen {VWd}x{VHd}.")
+    print(f"\033[1;32m[Статус] Захват: {Wd}x{Hd} at ({MON_X},{MON_Y}); виртуальный экран {VWd}x{VHd}.")
 
 
 _select_monitor()
@@ -178,7 +178,7 @@ _select_monitor()
 def export_to_onnx():
     if os.path.exists(ONNX_MODEL):
         return
-    print("\033[1;36m[Status] First run — downloading YOLOv8n (~6MB) and exporting to ONNX...")
+    print("\033[1;36m[Статус] Первый запуск — скачиваю YOLOv8n (~6MB) и экспортирую в ONNX...")
     subprocess.call([sys.executable, "-m", "pip", "install", "ultralytics"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     from ultralytics import YOLO
     pt_path = os.path.join(ROOT_DIR, "yolov8n.pt")
@@ -189,7 +189,7 @@ def export_to_onnx():
     os.replace(exported, ONNX_MODEL)
     if os.path.exists(pt_path):
         os.remove(pt_path)
-    print("\033[1;32m[Status] ONNX export done.")
+    print("\033[1;32m[Статус] Экспорт ONNX готов.")
 
 
 def postprocess(output, img_w, img_h, conf_thresh, iou_thresh):
@@ -303,7 +303,7 @@ def aimbot(ENABLE_AIMBOT=True):
     aim_box = box0
 
     def signal_handler(sig, frame):
-        print("\n[Exit] cleaning up...")
+        print("\n[Выход] завершаю...")
         cap.stop()
         close()
         cv2.destroyAllWindows()
@@ -313,16 +313,16 @@ def aimbot(ENABLE_AIMBOT=True):
 
     export_to_onnx()
 
-    print("\033[1;36m[Status] Loading YOLOv8n ONNX model...")
+    print("\033[1;36m[Статус] Загружаю модель YOLOv8n ONNX...")
     sess = ort.InferenceSession(ONNX_MODEL, providers=["CPUExecutionProvider"])
     inp_name = sess.get_inputs()[0].name
-    print("\033[1;32m[Status] Model loaded (onnxruntime CPU).")
+    print("\033[1;32m[Статус] Модель загружена (onnxruntime CPU).")
 
     if not ENABLE_AIMBOT:
-        print("\033[1;91m[Status] Aimbot disabled, only objects detector works...")
+        print("\033[1;91m[Статус] Аим выключен, только детектор...")
     else:
-        print("\033[1;92m[AI] Aimbot enabled..")
-    print(f"\033[1;33m[Mode] hold — hold {CFG.get('hold_button', 'x2')} to aim, {CFG.get('toggle_hotkey', 'F1')} for always-on.")
+        print("\033[1;92m[AI] Аим включён..")
+    print(f"\033[1;33m[Режим] hold — держи {CFG.get('hold_button', 'x2')} для аима, {CFG.get('toggle_hotkey', 'F1')} для always-on.")
 
     def is_active():
         return mode == "always" or mouse_held
@@ -332,10 +332,10 @@ def aimbot(ENABLE_AIMBOT=True):
         mode = "always" if mode == "hold" else "hold"
         last_tx, last_ty = None, None
         if mode == "always":
-            print("\nAimbot : " + GREEN + "always on" + RESET)
+            print("\nАим : " + GREEN + "всегда вкл" + RESET)
             winsound.Beep(440, 100)
         else:
-            print("\nAimbot : " + RED + "hold mode" + RESET)
+            print("\nАим : " + RED + "режим hold" + RESET)
 
     def current_hold_button():
         from pynput.mouse import Button as _Btn
@@ -400,17 +400,17 @@ def aimbot(ENABLE_AIMBOT=True):
             import questionary
             while True:
                 os.system("cls" if os.name == "nt" else "clear")
-                print("======== AIm Settings ========")
+                print("======== Настройки AIm ========")
                 for mkey, ckey, label in SETTING_ITEMS:
                     v = CFG.get(ckey)
                     if v is True:
-                        v = "on"
+                        v = "вкл"
                     elif v is False:
-                        v = "off"
+                        v = "выкл"
                     print(f"  [{mkey}] {label}: {v}")
-                print("  [S] Save & Back")
-                print("  [Esc] Reset to defaults")
-                print("  [Q/8] Back")
+                print("  [S] Сохранить и выйти")
+                print("  [Esc] Сбросить настройки")
+                print("  [Q/8] Назад")
                 ch = msvcrt.getch()
                 if ch == b"\x1b":
                     import copy
@@ -418,14 +418,14 @@ def aimbot(ENABLE_AIMBOT=True):
                     CFG.update(copy.deepcopy(DEFAULT_CONFIG))
                     save_config(CFG)
                     apply_all()
-                    print("Reset to defaults. Press any key...")
+                    print("Сброшено к дефолтам. Нажми любую клавишу...")
                     msvcrt.getch()
                 elif ch in (b"q", b"Q", b"8"):
                     save_config(CFG)
                     break
                 elif ch in (b"s", b"S"):
                     save_config(CFG)
-                    print("Saved to config.json. Press any key...")
+                    print("Сохранено в config.json. Нажми любую клавишу...")
                     msvcrt.getch()
                 else:
                     try:
@@ -494,7 +494,7 @@ def aimbot(ENABLE_AIMBOT=True):
     cap = ThreadedCapture(capture_region)
     cap.start()
 
-    WINDOW_NAME = "AIm - Objects Detector"
+    WINDOW_NAME = "AIm - Детектор"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
     prev_time = time.perf_counter()
@@ -569,7 +569,7 @@ def aimbot(ENABLE_AIMBOT=True):
                 last_tx, last_ty = None, None
 
             if CFG.get("detector_only", False):
-                cv2.putText(frame, "DETECTOR ONLY - no aiming", (10, 25),
+                cv2.putText(frame, "ТОЛЬКО ДЕТЕКТОР - без аима", (10, 25),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
             cv2.imshow(WINDOW_NAME, frame)
 

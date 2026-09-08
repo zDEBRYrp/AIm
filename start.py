@@ -24,11 +24,11 @@ print("\033[1;36m" + r"""
 ╚═╝  ╚═╝╚═╝╚═╝     ╚═╝
      AI + m = AIM
 """ + "\033[0m")
-print("\033[1;35m[Control] ->\033[1;34m [F1] switch mode: Always On / Hold")
-print("\033[1;35m          ->\033[1;34m [Mouse4] aim ONLY in Hold mode (hold to aim)")
-print("\033[1;35m          ->\033[1;34m [8] settings (when console focused)")
-print("\033[1;35m          ->\033[1;34m [0] Exit")
-print("\033[1;33m\n[Tips] Press F1 to set mode\n")
+print("\033[1;35m[Управление] ->\033[1;34m [F1] смена режима: Всегда вкл / Hold")
+print("\033[1;35m             ->\033[1;34m [Mouse4] аим ТОЛЬКО в Hold режиме (держи)")
+print("\033[1;35m             ->\033[1;34m [8] настройки (когда консоль в фокусе)")
+print("\033[1;35m             ->\033[1;34m [0] Выход")
+print("\033[1;33m\n[Совет] Нажми F1 для смены режима\n")
 
 from lib.detect import aimbot
 
