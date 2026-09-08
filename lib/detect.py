@@ -38,10 +38,11 @@ PERSON_CLASS = 0
 
 def load_config():
     defaults = {
-        "confidence": 0.36,
+        "confidence": 0.30,
         "iou_threshold": 0.45,
         "activation_range": 250,
-        "smoothing": 0.35,
+        "smoothing": 0.55,
+        "aim_height_ratio": 0.2,
         "hold_button": "x2",
         "toggle_hotkey": "F1",
         "monitor": "primary",
@@ -194,7 +195,8 @@ class SmoothAim:
 
 
 def aimbot(ENABLE_AIMBOT=True):
-    aimbot_paused = True
+    mode = "hold"
+    mouse_held = False
     GREEN = "\033[92m"
     RED = "\033[91m"
     RESET = "\033[0m"
@@ -241,16 +243,20 @@ def aimbot(ENABLE_AIMBOT=True):
         print("\033[1;91m[Status] Aimbot disabled, only objects detector works...")
     else:
         print("\033[1;92m[AI] Aimbot enabled..")
+    print(f"\033[1;33m[Mode] hold — hold {CFG.get('hold_button', 'x2')} to aim, {CFG.get('toggle_hotkey', 'F1')} for always-on.")
+
+    def is_active():
+        return mode == "always" or mouse_held
 
     def toggle_aimbot():
-        nonlocal aimbot_paused
-        aimbot_paused = not aimbot_paused
-        if aimbot_paused:
-            smooth.reset()
-            print("\nAimbot : " + RED + "hold mode" + RESET)
-        else:
+        nonlocal mode
+        mode = "always" if mode == "hold" else "hold"
+        smooth.reset()
+        if mode == "always":
             print("\nAimbot : " + GREEN + "always on" + RESET)
             winsound.Beep(440, 100)
+        else:
+            print("\nAimbot : " + RED + "hold mode" + RESET)
 
     keyboard.add_hotkey(CFG["toggle_hotkey"], toggle_aimbot)
 
@@ -262,15 +268,11 @@ def aimbot(ENABLE_AIMBOT=True):
         hold_button = getattr(_Btn, btn_name)
 
     def on_click(x, y, button, pressed):
-        if button == hold_button and pressed:
-            nonlocal aimbot_paused
-            aimbot_paused = not aimbot_paused
-            if aimbot_paused:
+        if button == hold_button:
+            nonlocal mouse_held
+            mouse_held = pressed
+            if pressed:
                 smooth.reset()
-                print("\nAimbot : " + RED + "hold mode" + RESET)
-            else:
-                print("\nAimbot : " + GREEN + "always on" + RESET)
-                winsound.Beep(440, 100)
 
     cap = ThreadedCapture(capture_region)
     cap.start()
@@ -288,7 +290,7 @@ def aimbot(ENABLE_AIMBOT=True):
 
     with Listener(on_click=on_click) as listener:
         while True:
-            if aimbot_paused:
+            if not is_active():
                 time.sleep(0.05)
                 continue
 
@@ -318,12 +320,14 @@ def aimbot(ENABLE_AIMBOT=True):
                     cv2.putText(frame, text, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
                     if ENABLE_AIMBOT and i == best_idx and cls == PERSON_CLASS:
+                        aim_h = CFG.get("aim_height_ratio", 0.2)
+                        cx_t = (x1 + x2) / 2
+                        cy_t = y1 + (y2 - y1) * aim_h
                         if FULLSCREEN:
-                            raw_x = (x1 + x2) / 2
-                            raw_y = (y1 + y2) / 3
+                            raw_x, raw_y = cx_t, cy_t
                         else:
-                            raw_x = aim_box[0] + (x1 + x2) / 2
-                            raw_y = aim_box[1] + (y1 + y2) / 3
+                            raw_x = aim_box[0] + cx_t
+                            raw_y = aim_box[1] + cy_t
                         sx, sy = smooth.update(raw_x, raw_y)
                         position(sx, sy)
 

@@ -23,8 +23,8 @@ print(r"""
 /_/   \_\_| \_\\_____|
    AI + m = AIm
 """)
-print("\033[1;35m[Control] ->\033[1;34m [F1] Aimbot: Always On/Hold Mode")
-print("\033[1;35m          ->\033[1;34m [Mouse4] Hold Mode: Press/Release")
+print("\033[1;35m[Control] ->\033[1;34m [F1] switch mode: Always On / Hold")
+print("\033[1;35m          ->\033[1;34m [Mouse4] aim ONLY in Hold mode (hold to aim)")
 print("\033[1;35m          ->\033[1;34m [0] Exit")
 print("\033[1;33m\n[Tips] Press F1 to set mode")
 print("\033[1;33m[Config] Edit config.json to change settings\n")

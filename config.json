@@ -1,8 +1,9 @@
 {
-    "confidence": 0.36,
+    "confidence": 0.30,
     "iou_threshold": 0.45,
     "activation_range": 250,
-    "smoothing": 0.35,
+    "smoothing": 0.55,
+    "aim_height_ratio": 0.2,
     "hold_button": "x2",
     "toggle_hotkey": "F1",
     "fullscreen": false,

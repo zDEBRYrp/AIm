@@ -29,10 +29,11 @@
 
 
 ## Features
-- (F1) Aimbot: Always On / Hold Mode
-- (Mouse4) Hold Mode: Press / Release
+- (F1) Switch mode: Always On / Hold Mode
+- (Mouse4) Aim while held — works ONLY in Hold Mode
 - (0) Exit
 - GUI objects detector — see how the model recognizes targets in real time
+- All settings in `config.json` (confidence, smoothing, aim height, hotkeys, monitor)
 
 
 ## Requirements
