@@ -22,10 +22,12 @@ import onnxruntime as ort
 from pynput.mouse import Listener
 import pynput._util.win32 as _pynput_win32
 
-from utils.grab import screen, get_screen_size, close
+from utils.grab import screen, get_screen_size, close, set_monitor, get_monitor_origin, get_virtual_size, list_monitors
 
 SendInput = ctypes.windll.user32.SendInput
-Wd, Hd = get_screen_size()
+Wd, Hd = 0, 0
+VWd, VHd = 0, 0
+MON_X, MON_Y = 0, 0
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -42,6 +44,7 @@ def load_config():
         "smoothing": 0.35,
         "hold_button": "x2",
         "toggle_hotkey": "F1",
+        "monitor": "primary",
     }
     config_path = os.path.join(ROOT_DIR, "config.json")
     if os.path.exists(config_path):
@@ -53,6 +56,23 @@ def load_config():
 
 
 CFG = load_config()
+
+
+def _select_monitor():
+    global Wd, Hd, VWd, VHd, MON_X, MON_Y
+    choice = CFG.get("monitor", "primary")
+    if isinstance(choice, int):
+        set_monitor(choice)
+    for m in list_monitors():
+        tag = " [PRIMARY]" if m["primary"] else ""
+        print(f"\033[1;36m[Monitor {m['index']}] {m['width']}x{m['height']} at ({m['left']},{m['top']}){tag}")
+    Wd, Hd = get_screen_size()
+    MON_X, MON_Y = get_monitor_origin()
+    VWd, VHd = get_virtual_size()
+    print(f"\033[1;32m[Status] Capture: {Wd}x{Hd} at ({MON_X},{MON_Y}); virtual screen {VWd}x{VHd}.")
+
+
+_select_monitor()
 
 
 def export_to_onnx():
@@ -112,8 +132,8 @@ def postprocess(output, img_w, img_h, conf_thresh, iou_thresh):
 
 
 def position(x, y):
-    x = 1 + int(x * 65536.0 / Wd)
-    y = 1 + int(y * 65536.0 / Hd)
+    x = 1 + int((MON_X + x) * 65536.0 / VWd)
+    y = 1 + int((MON_Y + y) * 65536.0 / VHd)
     extra = ctypes.c_ulong(0)
     ii_ = _pynput_win32.INPUT_union()
     ii_.mi = _pynput_win32.MOUSEINPUT(x, y, 0, (0x0001 | 0x8000), 0,
