@@ -33,7 +33,7 @@
 - (Mouse4) Aim while held — works ONLY in Hold Mode
 - (0) Exit
 - GUI objects detector — see how the model recognizes targets in real time
-- All settings in `config.json` (confidence, smoothing, aim height, hotkeys, monitor)
+- All settings in `config.json` (confidence, aim speed, deadzone, aim height, hotkeys, monitor)
 
 
 ## Requirements

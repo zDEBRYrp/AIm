@@ -41,7 +41,8 @@ def load_config():
         "confidence": 0.30,
         "iou_threshold": 0.45,
         "activation_range": 250,
-        "smoothing": 0.55,
+        "aim_speed": 0.8,
+        "deadzone": 2,
         "aim_height_ratio": 0.2,
         "hold_button": "x2",
         "toggle_hotkey": "F1",
@@ -132,12 +133,13 @@ def postprocess(output, img_w, img_h, conf_thresh, iou_thresh):
     return boxes_x1y1x2y2[indices], max_scores[indices], class_ids[indices]
 
 
-def position(x, y):
-    x = 1 + int((MON_X + x) * 65536.0 / VWd)
-    y = 1 + int((MON_Y + y) * 65536.0 / VHd)
+def move_relative(dx, dy):
+    dx, dy = int(dx), int(dy)
+    if dx == 0 and dy == 0:
+        return
     extra = ctypes.c_ulong(0)
     ii_ = _pynput_win32.INPUT_union()
-    ii_.mi = _pynput_win32.MOUSEINPUT(x, y, 0, (0x0001 | 0x8000), 0,
+    ii_.mi = _pynput_win32.MOUSEINPUT(dx, dy, 0, 0x0001, 0,
                                        ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
     command = _pynput_win32.INPUT(ctypes.c_ulong(0), ii_)
     SendInput(1, ctypes.pointer(command), ctypes.sizeof(command))
@@ -172,31 +174,10 @@ class ThreadedCapture:
             self._thread.join(timeout=1.0)
 
 
-class SmoothAim:
-    def __init__(self, factor=0.35):
-        self.factor = factor
-        self.smooth_x = 0.0
-        self.smooth_y = 0.0
-        self.initialized = False
-
-    def update(self, target_x, target_y):
-        if not self.initialized:
-            self.smooth_x = target_x
-            self.smooth_y = target_y
-            self.initialized = True
-            return self.smooth_x, self.smooth_y
-        alpha = self.factor
-        self.smooth_x += alpha * (target_x - self.smooth_x)
-        self.smooth_y += alpha * (target_y - self.smooth_y)
-        return self.smooth_x, self.smooth_y
-
-    def reset(self):
-        self.initialized = False
-
-
 def aimbot(ENABLE_AIMBOT=True):
     mode = "hold"
     mouse_held = False
+    last_tx, last_ty = None, None
     GREEN = "\033[92m"
     RED = "\033[91m"
     RESET = "\033[0m"
@@ -249,9 +230,9 @@ def aimbot(ENABLE_AIMBOT=True):
         return mode == "always" or mouse_held
 
     def toggle_aimbot():
-        nonlocal mode
+        nonlocal mode, last_tx, last_ty
         mode = "always" if mode == "hold" else "hold"
-        smooth.reset()
+        last_tx, last_ty = None, None
         if mode == "always":
             print("\nAimbot : " + GREEN + "always on" + RESET)
             winsound.Beep(440, 100)
@@ -269,14 +250,13 @@ def aimbot(ENABLE_AIMBOT=True):
 
     def on_click(x, y, button, pressed):
         if button == hold_button:
-            nonlocal mouse_held
+            nonlocal mouse_held, last_tx, last_ty
             mouse_held = pressed
             if pressed:
-                smooth.reset()
+                last_tx, last_ty = None, None
 
     cap = ThreadedCapture(capture_region)
     cap.start()
-    smooth = SmoothAim(factor=CFG["smoothing"])
 
     WINDOW_NAME = "AIm - Objects Detector"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
@@ -306,30 +286,49 @@ def aimbot(ENABLE_AIMBOT=True):
             boxes, scores, class_ids = postprocess(output, img_w, img_h, CFG["confidence"], CFG["iou_threshold"])
 
             if len(boxes) > 0:
-                best_idx = scores.argmax()
-
+                aim_h = CFG.get("aim_height_ratio", 0.2)
+                targets = []
                 for i in range(len(boxes)):
                     x1, y1, x2, y2 = boxes[i].astype(int)
                     conf = scores[i]
                     cls = int(class_ids[i])
 
+                    ax = (x1 + x2) // 2
+                    ay = int(y1 + (y2 - y1) * aim_h)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                    cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 3), 5, (0, 0, 255), -1)
+                    cv2.circle(frame, (ax, ay), 5, (0, 0, 255), -1)
                     label = "person" if cls == PERSON_CLASS else str(cls)
                     text = f"{label} {int(conf * 100)}%"
                     cv2.putText(frame, text, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
-                    if ENABLE_AIMBOT and i == best_idx and cls == PERSON_CLASS:
-                        aim_h = CFG.get("aim_height_ratio", 0.2)
-                        cx_t = (x1 + x2) / 2
-                        cy_t = y1 + (y2 - y1) * aim_h
+                    if cls == PERSON_CLASS:
                         if FULLSCREEN:
-                            raw_x, raw_y = cx_t, cy_t
+                            tx, ty = float(ax), float(ay)
                         else:
-                            raw_x = aim_box[0] + cx_t
-                            raw_y = aim_box[1] + cy_t
-                        sx, sy = smooth.update(raw_x, raw_y)
-                        position(sx, sy)
+                            tx = aim_box[0] + ax
+                            ty = aim_box[1] + ay
+                        targets.append((tx, ty))
+
+                if ENABLE_AIMBOT and targets:
+                    cross_x, cross_y = Wd // 2, Hd // 2
+                    if last_tx is not None:
+                        sticky = min(targets, key=lambda p: (p[0] - last_tx) ** 2 + (p[1] - last_ty) ** 2)
+                        d = ((sticky[0] - last_tx) ** 2 + (sticky[1] - last_ty) ** 2) ** 0.5
+                        if d < 150:
+                            target = sticky
+                        else:
+                            target = min(targets, key=lambda p: (p[0] - cross_x) ** 2 + (p[1] - cross_y) ** 2)
+                    else:
+                        target = min(targets, key=lambda p: (p[0] - cross_x) ** 2 + (p[1] - cross_y) ** 2)
+                    last_tx, last_ty = target
+                    dx = target[0] - cross_x
+                    dy = target[1] - cross_y
+                    dz = CFG.get("deadzone", 2)
+                    if abs(dx) >= dz or abs(dy) >= dz:
+                        spd = CFG.get("aim_speed", 0.8)
+                        move_relative(dx * spd, dy * spd)
+            else:
+                last_tx, last_ty = None, None
 
             cv2.imshow(WINDOW_NAME, frame)
 
