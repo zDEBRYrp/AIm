@@ -254,9 +254,18 @@ def aimbot(ENABLE_AIMBOT=True):
         cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     else:
         cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
-        win_x = max(0, (Wd - ACTIVATION_RANGE) // 2)
-        win_y = max(0, (Hd - ACTIVATION_RANGE) // 2)
-        cv2.moveWindow(WINDOW_NAME, win_x, win_y)
+        cv2.waitKey(100)
+        import win32gui
+        def _move_window():
+            try:
+                hwnd = win32gui.FindWindow(None, WINDOW_NAME)
+                if hwnd:
+                    win_x = (Wd - ACTIVATION_RANGE) // 2
+                    win_y = (Hd - ACTIVATION_RANGE) // 2
+                    win32gui.MoveWindow(hwnd, win_x, win_y, ACTIVATION_RANGE, ACTIVATION_RANGE, True)
+            except Exception:
+                pass
+        _move_window()
 
     prev_time = time.perf_counter()
 
