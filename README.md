@@ -6,7 +6,7 @@
 
 **AIm** = **AI** + **m** (от AIM) — нейросетевой аимбот, работающий в реальном времени на основе object detection.
 
-<h4 align="center">AIm uses real-time object detection with neural networks to recognize human-like patterns and aim at targets. It never accesses game memory — only captures the screen and controls the mouse on behalf of the user.</h4>
+<h4 align="center">AIm uses YOLOv8n for real-time person detection. Screen capture via mss, inference via onnxruntime — lightweight, fast, no GPU required.</h4>
 
 <h6 align="center">Fork of <a href="https://github.com/McDaived/AIMi">McDaived/AIMi</a> — modernized and improved.</h6>
 
@@ -21,13 +21,11 @@
 > If you want to clarify: "AI Aim - AIm"
 
 
-## What's new (v2 - 2026)
-- **YOLOv8n** instead of YOLOv3-tiny — faster, more accurate, 80 object classes
-- **ultralytics** pipeline — auto NMS, auto model download, GPU/CPU auto-detect
-- **mss** screen capture — replaced raw Win32 API calls
-- Removed dead code and deprecated libraries
-- Fixed multiple bugs (deprecations, missing imports)
-- Python 3.10+ support
+## Architecture (v2 - 2026)
+- **YOLOv8n** (ultralytics) → ONNX export → **onnxruntime** for inference
+- **mss** for screen capture (fast, minimal CPU overhead)
+- No PyTorch at runtime — only used once for model export
+- Auto-downloads and exports model on first run (~6MB download)
 
 
 ## Features
@@ -52,7 +50,7 @@
 ```
 python start.py
 ```
-Dependencies install automatically on first run. YOLOv8n model (~6MB) downloads on first launch.
+Dependencies install automatically. YOLOv8n model exports to ONNX on first launch.
 
 
 ## Settings
@@ -63,31 +61,27 @@ Use a dot crosshair for best results:
 CSGO-YE93T-V6tTU-Cxa9r-jCf7s-2XJaA
 ```
 
-### Stretch Screen (Optional)
-Edit `lib/detect.py`, the `ACTIVATION_RANGE` and `origbox` calculation.
-
 ### Change Hotkey
-Edit `lib/detect.py`, the `on_click` function (line ~79).
+Edit `lib/detect.py`, the `on_click` function.
 
 
 ## Known Issues
 
 **Aiming at the ground** — Disable raw input + enhance pointer precision.
 
-**Valorant** — Requires a kernel driver to bypass mouse input restrictions. See [this](https://www.unknowncheats.me/forum/3912497-post139.html).
+**Valorant** — Requires a kernel driver to bypass mouse input restrictions.
 
 
 ## How it works
 
-### Neural Network
-- Never accesses game memory — invisible to most anti-cheat
-- Abstracts capabilities to many FPS games without code modifications
-
-### YOLOv8 (ultralytics)
-Trained on COCO dataset (80 classes including person). Optimized for real-time detection.
+### YOLOv8n (ONNX)
+Trained on COCO dataset (80 classes). Exported to ONNX for lightweight CPU inference via onnxruntime. No PyTorch overhead at runtime.
 
 ### Screen Capture
 Uses `mss` for fast screen region capture with minimal CPU overhead.
+
+### Mouse Control
+Uses Win32 `SendInput` API via pynput for precise mouse movement.
 
 
 ## Credits

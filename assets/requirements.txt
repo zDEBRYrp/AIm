@@ -1,8 +1,7 @@
-pywin32
-mss
 numpy
 opencv-python>=4.8,<5.0
+mss
+pywin32
 pynput
-termcolor
 keyboard
-ultralytics
+onnxruntime
