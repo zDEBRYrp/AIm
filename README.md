@@ -56,10 +56,13 @@ Dependencies install automatically. YOLOv8n model exports to ONNX on first launc
 ## Settings
 
 ### Optimizing for CS2
-Use a dot crosshair for best results:
+Use a **dot crosshair** — the neural network works better without crosshair lines interfering with detection.
+
+Import this crosshair code in CS2 (Settings → Game → Crosshair → Import):
 ```
-CSGO-YE93T-V6tTU-Cxa9r-jCf7s-2XJaA
+CSGO-FZUXv-VVbLD-EDy3c-kYqf3-UMkTL
 ```
+Or set manually: enable **"Точка в центре"**, set Length to 0, Thickness to 0, Gap to 0, Outline off.
 
 ### Change Hotkey
 Edit `lib/detect.py`, the `on_click` function.

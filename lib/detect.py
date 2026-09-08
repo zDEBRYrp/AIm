@@ -236,6 +236,13 @@ def aimbot(ENABLE_AIMBOT=True):
     cap.start()
     smooth = SmoothAim(factor=CFG["smoothing"])
 
+    WINDOW_NAME = "AIm - Objects Detector"
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
+    win_x = max(0, (Wd - ACTIVATION_RANGE) // 2)
+    win_y = max(0, (Hd - ACTIVATION_RANGE) // 2)
+    cv2.moveWindow(WINDOW_NAME, win_x, win_y)
+
     prev_time = time.perf_counter()
 
     with Listener(on_click=on_click) as listener:
@@ -275,7 +282,7 @@ def aimbot(ENABLE_AIMBOT=True):
                         sx, sy = smooth.update(raw_x, raw_y)
                         position(sx, sy)
 
-            cv2.imshow("AIm - Objects Detector", frame)
+            cv2.imshow(WINDOW_NAME, frame)
 
             now = time.perf_counter()
             elapsed = now - prev_time
