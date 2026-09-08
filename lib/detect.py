@@ -171,15 +171,27 @@ def aimbot(ENABLE_AIMBOT=True):
     RED = "\033[91m"
     RESET = "\033[0m"
 
+    FULLSCREEN = CFG.get("fullscreen", False)
     ACTIVATION_RANGE = CFG["activation_range"]
     cx = Wd // 2
     cy = Hd // 2
-    origbox = (
-        cx - ACTIVATION_RANGE // 2,
-        cy - ACTIVATION_RANGE // 2,
-        cx + ACTIVATION_RANGE // 2,
-        cy + ACTIVATION_RANGE // 2,
-    )
+
+    if FULLSCREEN:
+        capture_region = None
+        aim_box = (
+            cx - ACTIVATION_RANGE // 2,
+            cy - ACTIVATION_RANGE // 2,
+            cx + ACTIVATION_RANGE // 2,
+            cy + ACTIVATION_RANGE // 2,
+        )
+    else:
+        capture_region = (
+            cx - ACTIVATION_RANGE // 2,
+            cy - ACTIVATION_RANGE // 2,
+            cx + ACTIVATION_RANGE // 2,
+            cy + ACTIVATION_RANGE // 2,
+        )
+        aim_box = capture_region
 
     def signal_handler(sig, frame):
         print("\n[Exit] cleaning up...")
@@ -232,16 +244,19 @@ def aimbot(ENABLE_AIMBOT=True):
                 print("\nAimbot : " + GREEN + "always on" + RESET)
                 winsound.Beep(440, 100)
 
-    cap = ThreadedCapture(origbox)
+    cap = ThreadedCapture(capture_region)
     cap.start()
     smooth = SmoothAim(factor=CFG["smoothing"])
 
     WINDOW_NAME = "AIm - Objects Detector"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
-    win_x = max(0, (Wd - ACTIVATION_RANGE) // 2)
-    win_y = max(0, (Hd - ACTIVATION_RANGE) // 2)
-    cv2.moveWindow(WINDOW_NAME, win_x, win_y)
+    if FULLSCREEN:
+        cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    else:
+        cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
+        win_x = max(0, (Wd - ACTIVATION_RANGE) // 2)
+        win_y = max(0, (Hd - ACTIVATION_RANGE) // 2)
+        cv2.moveWindow(WINDOW_NAME, win_x, win_y)
 
     prev_time = time.perf_counter()
 
@@ -277,8 +292,12 @@ def aimbot(ENABLE_AIMBOT=True):
                     cv2.putText(frame, text, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
                     if ENABLE_AIMBOT and i == best_idx and cls == PERSON_CLASS:
-                        raw_x = origbox[0] + (x1 + x2) / 2
-                        raw_y = origbox[1] + (y1 + y2) / 3
+                        if FULLSCREEN:
+                            raw_x = (x1 + x2) / 2
+                            raw_y = (y1 + y2) / 3
+                        else:
+                            raw_x = aim_box[0] + (x1 + x2) / 2
+                            raw_y = aim_box[1] + (y1 + y2) / 3
                         sx, sy = smooth.update(raw_x, raw_y)
                         position(sx, sy)
 

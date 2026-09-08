@@ -4,5 +4,6 @@
     "activation_range": 250,
     "smoothing": 0.35,
     "hold_button": "x2",
-    "toggle_hotkey": "F1"
+    "toggle_hotkey": "F1",
+    "fullscreen": false
 }
