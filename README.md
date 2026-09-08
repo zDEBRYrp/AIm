@@ -31,6 +31,7 @@
 ## Features
 - (F1) Switch mode: Always On / Hold Mode
 - (Mouse4) Aim while held — works ONLY in Hold Mode
+- (8) Settings menu in console — FOV (or `full`), aim speed, buttons, monitor, detector-only video mode; Esc resets to defaults
 - (0) Exit
 - GUI objects detector — see how the model recognizes targets in real time
 - All settings in `config.json` (confidence, aim speed, max step, deadzone, aim height, hotkeys, monitor)

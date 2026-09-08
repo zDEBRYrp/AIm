@@ -1,5 +1,5 @@
 {
-    "confidence": 0.30,
+    "confidence": 0.3,
     "iou_threshold": 0.45,
     "activation_range": 250,
     "aim_speed": 0.35,
@@ -9,5 +9,6 @@
     "hold_button": "x2",
     "toggle_hotkey": "F1",
     "fullscreen": false,
+    "detector_only": false,
     "monitor": "primary"
 }

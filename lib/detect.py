@@ -36,26 +36,123 @@ INPUT_SIZE = 256
 PERSON_CLASS = 0
 
 
+DEFAULT_CONFIG = {
+    "confidence": 0.30,
+    "iou_threshold": 0.45,
+    "activation_range": 250,
+    "aim_speed": 0.35,
+    "max_step": 25,
+    "deadzone": 2,
+    "aim_height_ratio": 0.2,
+    "hold_button": "x2",
+    "toggle_hotkey": "F1",
+    "fullscreen": False,
+    "detector_only": False,
+    "monitor": "primary",
+}
+
+SETTING_ITEMS = [
+    ("1", "confidence", "Confidence (0.05-0.95)"),
+    ("2", "iou_threshold", "NMS IoU (0.1-0.9)"),
+    ("3", "activation_range", "FOV size px or 'full'"),
+    ("4", "aim_speed", "Aim speed (0.05-2.0)"),
+    ("5", "max_step", "Max step px/frame (1-200)"),
+    ("6", "deadzone", "Deadzone px (0-50)"),
+    ("7", "aim_height_ratio", "Aim height 0-1 (0.2=head)"),
+    ("H", "hold_button", "Hold button (x2/left/right)"),
+    ("T", "toggle_hotkey", "Toggle hotkey (e.g. F1)"),
+    ("F", "fullscreen", "Fullscreen capture (y/n)"),
+    ("D", "detector_only", "Detector-only video mode (y/n)"),
+    ("M", "monitor", "Monitor (primary or 0/1/...)"),
+]
+
+
 def load_config():
-    defaults = {
-        "confidence": 0.30,
-        "iou_threshold": 0.45,
-        "activation_range": 250,
-        "aim_speed": 0.35,
-        "max_step": 25,
-        "deadzone": 2,
-        "aim_height_ratio": 0.2,
-        "hold_button": "x2",
-        "toggle_hotkey": "F1",
-        "monitor": "primary",
-    }
+    import copy
+    import json
+    cfg = copy.deepcopy(DEFAULT_CONFIG)
     config_path = os.path.join(ROOT_DIR, "config.json")
     if os.path.exists(config_path):
-        import json
         with open(config_path) as f:
             user = json.load(f)
-        defaults.update({k: v for k, v in user.items() if v is not None})
-    return defaults
+        cfg.update({k: v for k, v in user.items() if v is not None})
+    return cfg
+
+
+def save_config(cfg=None):
+    import json
+    cfg = cfg if cfg is not None else CFG
+    with open(os.path.join(ROOT_DIR, "config.json"), "w") as f:
+        json.dump(cfg, f, indent=4)
+
+
+def coerce_value(key, text):
+    t = text.strip()
+    try:
+        if key == "confidence":
+            v = float(t)
+            return (True, v, "") if 0.05 <= v <= 0.95 else (False, None, "Range 0.05-0.95")
+        if key == "iou_threshold":
+            v = float(t)
+            return (True, v, "") if 0.1 <= v <= 0.9 else (False, None, "Range 0.1-0.9")
+        if key == "activation_range":
+            if t.lower() == "full":
+                return (True, "full", "")
+            v = int(float(t))
+            return (True, v, "") if 64 <= v <= 1000 else (False, None, "Range 64-1000 or 'full'")
+        if key == "aim_speed":
+            v = float(t)
+            return (True, v, "") if 0.05 <= v <= 2.0 else (False, None, "Range 0.05-2.0")
+        if key == "max_step":
+            v = int(float(t))
+            return (True, v, "") if 1 <= v <= 200 else (False, None, "Range 1-200")
+        if key == "deadzone":
+            v = int(float(t))
+            return (True, v, "") if 0 <= v <= 50 else (False, None, "Range 0-50")
+        if key == "aim_height_ratio":
+            v = float(t)
+            return (True, v, "") if 0.0 <= v <= 1.0 else (False, None, "Range 0.0-1.0")
+        if key == "hold_button":
+            v = t.lower()
+            return (True, v, "") if v in ("x2", "left", "right") else (False, None, "Use x2 / left / right")
+        if key == "toggle_hotkey":
+            if not t:
+                return (False, None, "Empty hotkey")
+            keyboard.parse_hotkey(t.lower())
+            return (True, t.lower(), "")
+        if key == "fullscreen":
+            v = t.lower()
+            if v in ("y", "yes", "true", "1", "on"):
+                return (True, True, "")
+            if v in ("n", "no", "false", "0", "off"):
+                return (True, False, "")
+            return (False, None, "Use y/n")
+        if key == "detector_only":
+            v = t.lower()
+            if v in ("y", "yes", "true", "1", "on"):
+                return (True, True, "")
+            if v in ("n", "no", "false", "0", "off"):
+                return (True, False, "")
+            return (False, None, "Use y/n")
+        if key == "monitor":
+            if t.lower() == "primary":
+                return (True, "primary", "")
+            v = int(t)
+            n = len(list_monitors())
+            return (True, v, "") if 0 <= v < n else (False, None, f"Monitor 0-{n - 1} or 'primary'")
+    except ValueError:
+        return (False, None, "Invalid number")
+    except Exception as e:
+        return (False, None, f"Invalid value: {e}")
+    return (False, None, "Unknown setting")
+
+
+def console_focused():
+    try:
+        import win32gui
+        return win32gui.GetForegroundWindow() == win32gui.GetConsoleWindow()
+    except Exception:
+        return True
 
 
 CFG = load_config()
@@ -174,36 +271,36 @@ class ThreadedCapture:
         if self._thread:
             self._thread.join(timeout=1.0)
 
+    def set_region(self, region):
+        with self.lock:
+            self.region = region
+
 
 def aimbot(ENABLE_AIMBOT=True):
     mode = "hold"
     mouse_held = False
     last_tx, last_ty = None, None
+    in_menu = False
     GREEN = "\033[92m"
     RED = "\033[91m"
     RESET = "\033[0m"
 
-    FULLSCREEN = CFG.get("fullscreen", False)
-    ACTIVATION_RANGE = CFG["activation_range"]
+    def is_full():
+        return bool(CFG.get("fullscreen", False)) or CFG.get("activation_range") == "full"
+
+    def current_fov():
+        ar = CFG.get("activation_range", 250)
+        return 250 if ar == "full" else int(ar)
+
     cx = Wd // 2
     cy = Hd // 2
-
-    if FULLSCREEN:
+    ar0 = current_fov()
+    box0 = (cx - ar0 // 2, cy - ar0 // 2, cx + ar0 // 2, cy + ar0 // 2)
+    if is_full():
         capture_region = None
-        aim_box = (
-            cx - ACTIVATION_RANGE // 2,
-            cy - ACTIVATION_RANGE // 2,
-            cx + ACTIVATION_RANGE // 2,
-            cy + ACTIVATION_RANGE // 2,
-        )
     else:
-        capture_region = (
-            cx - ACTIVATION_RANGE // 2,
-            cy - ACTIVATION_RANGE // 2,
-            cx + ACTIVATION_RANGE // 2,
-            cy + ACTIVATION_RANGE // 2,
-        )
-        aim_box = capture_region
+        capture_region = box0
+    aim_box = box0
 
     def signal_handler(sig, frame):
         print("\n[Exit] cleaning up...")
@@ -240,17 +337,152 @@ def aimbot(ENABLE_AIMBOT=True):
         else:
             print("\nAimbot : " + RED + "hold mode" + RESET)
 
-    keyboard.add_hotkey(CFG["toggle_hotkey"], toggle_aimbot)
-
-    hold_button = getattr(__import__("pynput.mouse", fromlist=["Button"]), "Button").x2
-    button_names = {"x2": "x2", "left": "left", "right": "right"}
-    btn_name = CFG.get("hold_button", "x2")
-    if btn_name in ("left", "right"):
+    def current_hold_button():
         from pynput.mouse import Button as _Btn
-        hold_button = getattr(_Btn, btn_name)
+        return getattr(_Btn, CFG.get("hold_button", "x2"), _Btn.x2)
+
+    def setup_hotkeys():
+        keyboard.clear_all_hotkeys()
+        keyboard.add_hotkey(CFG.get("toggle_hotkey", "F1"), toggle_aimbot)
+        keyboard.add_hotkey("8", open_settings)
+
+    def place_window():
+        ar = current_fov()
+        if is_full():
+            cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        else:
+            cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(WINDOW_NAME, ar, ar)
+            try:
+                import win32gui
+                hwnd = win32gui.FindWindow(None, WINDOW_NAME)
+                if hwnd:
+                    win_x = (Wd - ar) // 2
+                    win_y = (Hd - ar) // 2
+                    ctypes.windll.user32.SetWindowPos(hwnd, -1, win_x, win_y, 0, 0, 0x0001 | 0x0040)
+            except Exception:
+                pass
+
+    def rebuild_geometry():
+        nonlocal capture_region, aim_box
+        ar = current_fov()
+        cx_, cy_ = Wd // 2, Hd // 2
+        box = (cx_ - ar // 2, cy_ - ar // 2, cx_ + ar // 2, cy_ + ar // 2)
+        capture_region = None if is_full() else box
+        aim_box = box
+        cap.set_region(capture_region)
+        place_window()
+
+    def apply_setting(ckey):
+        if ckey in ("activation_range", "fullscreen"):
+            rebuild_geometry()
+        elif ckey == "toggle_hotkey":
+            setup_hotkeys()
+        elif ckey == "monitor":
+            _select_monitor()
+            rebuild_geometry()
+
+    def apply_all():
+        _select_monitor()
+        rebuild_geometry()
+        setup_hotkeys()
+
+    def open_settings():
+        nonlocal in_menu, capture_region, aim_box
+        if in_menu or not console_focused():
+            return
+        in_menu = True
+        try:
+            import msvcrt
+            import questionary
+            while True:
+                os.system("cls" if os.name == "nt" else "clear")
+                print("======== AIm Settings ========")
+                for mkey, ckey, label in SETTING_ITEMS:
+                    v = CFG.get(ckey)
+                    if v is True:
+                        v = "on"
+                    elif v is False:
+                        v = "off"
+                    print(f"  [{mkey}] {label}: {v}")
+                print("  [S] Save & Back")
+                print("  [Esc] Reset to defaults")
+                print("  [Q/8] Back")
+                ch = msvcrt.getch()
+                if ch == b"\x1b":
+                    import copy
+                    CFG.clear()
+                    CFG.update(copy.deepcopy(DEFAULT_CONFIG))
+                    save_config(CFG)
+                    apply_all()
+                    print("Reset to defaults. Press any key...")
+                    msvcrt.getch()
+                elif ch in (b"q", b"Q", b"8"):
+                    save_config(CFG)
+                    break
+                elif ch in (b"s", b"S"):
+                    save_config(CFG)
+                    print("Saved to config.json. Press any key...")
+                    msvcrt.getch()
+                else:
+                    try:
+                        sel = ch.decode("utf-8", "ignore").upper()
+                    except Exception:
+                        continue
+                    item = next((it for it in SETTING_ITEMS if it[0] == sel), None)
+                    if item is None:
+                        continue
+                    edit_setting(questionary, item)
+        finally:
+            in_menu = False
+
+    def edit_setting(questionary, item):
+        _, ckey, label = item
+        cur = CFG.get(ckey)
+        try:
+            if ckey in ("fullscreen", "detector_only"):
+                val = questionary.confirm(f"{label}? (now {cur})", default=bool(cur)).ask()
+                if val is None:
+                    return
+                CFG[ckey] = bool(val)
+            elif ckey == "hold_button":
+                val = questionary.select(f"{label} (now {cur}):",
+                                         choices=["x2", "left", "right"]).ask()
+                if val is None:
+                    return
+                CFG[ckey] = val
+            elif ckey == "monitor":
+                from questionary import Choice
+                opts = [Choice("primary (auto)", value="primary")]
+                for m in list_monitors():
+                    tag = "PRIMARY" if m["primary"] else "secondary"
+                    opts.append(Choice(f"{m['index']}: {m['width']}x{m['height']} ({tag})", value=m["index"]))
+                val = questionary.select(f"{label} (now {cur}):", choices=opts).ask()
+                if val is None:
+                    return
+                CFG[ckey] = val
+            else:
+                def _v(t):
+                    ok, _, err = coerce_value(ckey, t)
+                    return True if ok else err
+                t = questionary.text(f"{label} (now {cur}):", validate=_v).ask()
+                if t is None:
+                    return
+                ok, val, err = coerce_value(ckey, t)
+                if not ok:
+                    print(err)
+                    return
+                CFG[ckey] = val
+            save_config(CFG)
+            apply_setting(ckey)
+            print(f"{label} = {CFG[ckey]}")
+        except KeyboardInterrupt:
+            return
+
+    setup_hotkeys()
 
     def on_click(x, y, button, pressed):
-        if button == hold_button:
+        if button == current_hold_button():
             nonlocal mouse_held, last_tx, last_ty
             mouse_held = pressed
             if pressed:
@@ -261,16 +493,15 @@ def aimbot(ENABLE_AIMBOT=True):
 
     WINDOW_NAME = "AIm - Objects Detector"
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
-    if FULLSCREEN:
-        cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    else:
-        cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
 
     prev_time = time.perf_counter()
-    window_moved = False
+    window_placed = False
 
     with Listener(on_click=on_click) as listener:
         while True:
+            if in_menu:
+                time.sleep(0.2)
+                continue
             if not is_active():
                 time.sleep(0.05)
                 continue
@@ -303,14 +534,14 @@ def aimbot(ENABLE_AIMBOT=True):
                     cv2.putText(frame, text, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
                     if cls == PERSON_CLASS:
-                        if FULLSCREEN:
+                        if is_full():
                             tx, ty = float(ax), float(ay)
                         else:
                             tx = aim_box[0] + ax
                             ty = aim_box[1] + ay
                         targets.append((tx, ty))
 
-                if ENABLE_AIMBOT and targets:
+                if ENABLE_AIMBOT and not CFG.get("detector_only", False) and targets:
                     cross_x, cross_y = Wd // 2, Hd // 2
                     if last_tx is not None:
                         sticky = min(targets, key=lambda p: (p[0] - last_tx) ** 2 + (p[1] - last_ty) ** 2)
@@ -334,26 +565,14 @@ def aimbot(ENABLE_AIMBOT=True):
             else:
                 last_tx, last_ty = None, None
 
+            if CFG.get("detector_only", False):
+                cv2.putText(frame, "DETECTOR ONLY - no aiming", (10, 25),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
             cv2.imshow(WINDOW_NAME, frame)
 
-            if not window_moved and not FULLSCREEN:
-                window_moved = True
-                try:
-                    import win32gui
-                    hwnd = win32gui.FindWindow(None, WINDOW_NAME)
-                    if hwnd:
-                        win_x = (Wd - ACTIVATION_RANGE) // 2
-                        win_y = (Hd - ACTIVATION_RANGE) // 2
-                        HWND_TOPMOST = -1
-                        SWP_NOSIZE = 0x0001
-                        SWP_SHOWWINDOW = 0x0040
-                        ctypes.windll.user32.SetWindowPos(
-                            hwnd, HWND_TOPMOST,
-                            win_x, win_y, 0, 0,
-                            SWP_NOSIZE | SWP_SHOWWINDOW
-                        )
-                except Exception:
-                    pass
+            if not window_placed:
+                window_placed = True
+                place_window()
 
             now = time.perf_counter()
             elapsed = now - prev_time

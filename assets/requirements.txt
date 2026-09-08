@@ -5,3 +5,4 @@ pywin32
 pynput
 keyboard
 onnxruntime
+questionary
