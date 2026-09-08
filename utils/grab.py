@@ -1,5 +1,14 @@
+import ctypes
 import numpy as np
 import mss
+
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
 
 
 _sct = mss.MSS()

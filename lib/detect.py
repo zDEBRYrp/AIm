@@ -6,6 +6,14 @@ import ctypes
 import subprocess
 import threading
 
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+except Exception:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
 import cv2
 import numpy as np
 import keyboard
