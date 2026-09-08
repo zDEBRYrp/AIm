@@ -8,6 +8,5 @@
     "aim_height_ratio": 0.2,
     "hold_button": "x2",
     "toggle_hotkey": "F1",
-    "detector_only": false,
     "monitor": "primary"
 }

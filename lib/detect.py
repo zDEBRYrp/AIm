@@ -46,7 +46,6 @@ DEFAULT_CONFIG = {
     "aim_height_ratio": 0.2,
     "hold_button": "x2",
     "toggle_hotkey": "F1",
-    "detector_only": False,
     "monitor": "primary",
 }
 
@@ -60,7 +59,6 @@ SETTING_ITEMS = [
     ("7", "aim_height_ratio", "Высота прицела 0-1 (0.2=голова)", "0 верх бокса, 1 низ"),
     ("H", "hold_button", "Кнопка hold (x2/left/right)", "кнопка аима в hold-режиме"),
     ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)", "переключение always/hold"),
-    ("D", "detector_only", "Только детектор без аима (y/n)", "смотреть детекцию без наведения"),
     ("M", "monitor", "Монитор (primary или 0/1/...)", "экран, где запущена игра"),
 ]
 
@@ -118,13 +116,6 @@ def coerce_value(key, text):
                 return (False, None, "Пустой хоткей")
             keyboard.parse_hotkey(t.lower())
             return (True, t.lower(), "")
-        if key == "detector_only":
-            v = t.lower()
-            if v in ("y", "yes", "true", "1", "on"):
-                return (True, True, "")
-            if v in ("n", "no", "false", "0", "off"):
-                return (True, False, "")
-            return (False, None, "Введи y/n")
         if key == "monitor":
             if t.lower() == "primary":
                 return (True, "primary", "")
@@ -436,12 +427,7 @@ def aimbot(ENABLE_AIMBOT=True):
         _, ckey, label, _hint = item
         cur = CFG.get(ckey)
         try:
-            if ckey == "detector_only":
-                val = questionary.confirm(f"{label}? (now {cur})", default=bool(cur)).ask()
-                if val is None:
-                    return
-                CFG[ckey] = bool(val)
-            elif ckey == "hold_button":
+            if ckey == "hold_button":
                 val = questionary.select(f"{label} (now {cur}):",
                                          choices=["x2", "left", "right"]).ask()
                 if val is None:
@@ -537,7 +523,7 @@ def aimbot(ENABLE_AIMBOT=True):
                             ty = aim_box[1] + ay
                         targets.append((tx, ty))
 
-                if ENABLE_AIMBOT and not CFG.get("detector_only", False) and targets:
+                if ENABLE_AIMBOT and targets:
                     cross_x, cross_y = Wd // 2, Hd // 2
                     if last_tx is not None:
                         sticky = min(targets, key=lambda p: (p[0] - last_tx) ** 2 + (p[1] - last_ty) ** 2)
@@ -561,9 +547,6 @@ def aimbot(ENABLE_AIMBOT=True):
             else:
                 last_tx, last_ty = None, None
 
-            if CFG.get("detector_only", False):
-                cv2.putText(frame, "ТОЛЬКО ДЕТЕКТОР - без аима", (10, 25),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
             cv2.imshow(WINDOW_NAME, frame)
 
             if not window_placed:
