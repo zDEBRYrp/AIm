@@ -46,24 +46,22 @@ DEFAULT_CONFIG = {
     "aim_height_ratio": 0.2,
     "hold_button": "x2",
     "toggle_hotkey": "F1",
-    "fullscreen": False,
     "detector_only": False,
     "monitor": "primary",
 }
 
 SETTING_ITEMS = [
-    ("1", "confidence", "Уверенность (0.05-0.95)"),
-    ("2", "iou_threshold", "NMS IoU (0.1-0.9)"),
-    ("3", "activation_range", "FOV размер px или 'full'"),
-    ("4", "aim_speed", "Скорость аима (0.05-2.0)"),
-    ("5", "max_step", "Макс шаг px/кадр (1-200)"),
-    ("6", "deadzone", "Мёртвая зона px (0-50)"),
-    ("7", "aim_height_ratio", "Высота прицела 0-1 (0.2=голова)"),
-    ("H", "hold_button", "Кнопка hold (x2/left/right)"),
-    ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)"),
-    ("F", "fullscreen", "Захват всего экрана (y/n)"),
-    ("D", "detector_only", "Только детектор без аима (y/n)"),
-    ("M", "monitor", "Монитор (primary или 0/1/...)"),
+    ("1", "confidence", "Уверенность (0.05-0.95)", "ниже — видит больше, но врёт чаще"),
+    ("2", "iou_threshold", "NMS IoU (0.1-0.9)", "давит дубли боксов: выше — строже"),
+    ("3", "activation_range", "FOV размер px или 'full'", ""),
+    ("4", "aim_speed", "Скорость аима (0.05-2.0)", ""),
+    ("5", "max_step", "Макс шаг px/кадр (1-200)", "защита от резких рывков"),
+    ("6", "deadzone", "Мёртвая зона px (0-50)", "внутри зоны мышь стоит"),
+    ("7", "aim_height_ratio", "Высота прицела 0-1 (0.2=голова)", "0 верх бокса, 1 низ"),
+    ("H", "hold_button", "Кнопка hold (x2/left/right)", "кнопка аима в hold-режиме"),
+    ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)", "переключение always/hold"),
+    ("D", "detector_only", "Только детектор без аима (y/n)", "смотреть детекцию без наведения"),
+    ("M", "monitor", "Монитор (primary или 0/1/...)", "экран, где запущена игра"),
 ]
 
 
@@ -120,13 +118,6 @@ def coerce_value(key, text):
                 return (False, None, "Пустой хоткей")
             keyboard.parse_hotkey(t.lower())
             return (True, t.lower(), "")
-        if key == "fullscreen":
-            v = t.lower()
-            if v in ("y", "yes", "true", "1", "on"):
-                return (True, True, "")
-            if v in ("n", "no", "false", "0", "off"):
-                return (True, False, "")
-            return (False, None, "Введи y/n")
         if key == "detector_only":
             v = t.lower()
             if v in ("y", "yes", "true", "1", "on"):
@@ -286,7 +277,7 @@ def aimbot(ENABLE_AIMBOT=True):
     RESET = "\033[0m"
 
     def is_full():
-        return bool(CFG.get("fullscreen", False)) or CFG.get("activation_range") == "full"
+        return CFG.get("activation_range") == "full"
 
     def current_fov():
         ar = CFG.get("activation_range", 250)
@@ -377,7 +368,7 @@ def aimbot(ENABLE_AIMBOT=True):
         place_window()
 
     def apply_setting(ckey):
-        if ckey in ("activation_range", "fullscreen"):
+        if ckey == "activation_range":
             rebuild_geometry()
         elif ckey == "toggle_hotkey":
             setup_hotkeys()
@@ -401,13 +392,15 @@ def aimbot(ENABLE_AIMBOT=True):
             while True:
                 os.system("cls" if os.name == "nt" else "clear")
                 print("======== Настройки AIm ========")
-                for mkey, ckey, label in SETTING_ITEMS:
+                for mkey, ckey, label, hint in SETTING_ITEMS:
                     v = CFG.get(ckey)
                     if v is True:
                         v = "вкл"
                     elif v is False:
                         v = "выкл"
                     print(f"  [{mkey}] {label}: {v}")
+                    if hint:
+                        print(f"       → {hint}")
                 print("  [S] Сохранить и выйти")
                 print("  [Esc] Сбросить настройки")
                 print("  [Q/8] Назад")
@@ -440,10 +433,10 @@ def aimbot(ENABLE_AIMBOT=True):
             in_menu = False
 
     def edit_setting(questionary, item):
-        _, ckey, label = item
+        _, ckey, label, _hint = item
         cur = CFG.get(ckey)
         try:
-            if ckey in ("fullscreen", "detector_only"):
+            if ckey == "detector_only":
                 val = questionary.confirm(f"{label}? (now {cur})", default=bool(cur)).ask()
                 if val is None:
                     return
