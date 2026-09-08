@@ -254,20 +254,9 @@ def aimbot(ENABLE_AIMBOT=True):
         cv2.setWindowProperty(WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     else:
         cv2.resizeWindow(WINDOW_NAME, ACTIVATION_RANGE, ACTIVATION_RANGE)
-        cv2.waitKey(100)
-        import win32gui
-        def _move_window():
-            try:
-                hwnd = win32gui.FindWindow(None, WINDOW_NAME)
-                if hwnd:
-                    win_x = (Wd - ACTIVATION_RANGE) // 2
-                    win_y = (Hd - ACTIVATION_RANGE) // 2
-                    win32gui.MoveWindow(hwnd, win_x, win_y, ACTIVATION_RANGE, ACTIVATION_RANGE, True)
-            except Exception:
-                pass
-        _move_window()
 
     prev_time = time.perf_counter()
+    window_moved = False
 
     with Listener(on_click=on_click) as listener:
         while True:
@@ -311,6 +300,25 @@ def aimbot(ENABLE_AIMBOT=True):
                         position(sx, sy)
 
             cv2.imshow(WINDOW_NAME, frame)
+
+            if not window_moved and not FULLSCREEN:
+                window_moved = True
+                try:
+                    import win32gui
+                    hwnd = win32gui.FindWindow(None, WINDOW_NAME)
+                    if hwnd:
+                        win_x = (Wd - ACTIVATION_RANGE) // 2
+                        win_y = (Hd - ACTIVATION_RANGE) // 2
+                        HWND_TOPMOST = -1
+                        SWP_NOSIZE = 0x0001
+                        SWP_SHOWWINDOW = 0x0040
+                        ctypes.windll.user32.SetWindowPos(
+                            hwnd, HWND_TOPMOST,
+                            win_x, win_y, 0, 0,
+                            SWP_NOSIZE | SWP_SHOWWINDOW
+                        )
+                except Exception:
+                    pass
 
             now = time.perf_counter()
             elapsed = now - prev_time
