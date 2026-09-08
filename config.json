@@ -1,0 +1,8 @@
+{
+    "confidence": 0.36,
+    "iou_threshold": 0.45,
+    "activation_range": 250,
+    "smoothing": 0.35,
+    "hold_button": "x2",
+    "toggle_hotkey": "F1"
+}
