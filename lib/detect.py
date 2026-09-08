@@ -41,7 +41,8 @@ def load_config():
         "confidence": 0.30,
         "iou_threshold": 0.45,
         "activation_range": 250,
-        "aim_speed": 0.8,
+        "aim_speed": 0.35,
+        "max_step": 25,
         "deadzone": 2,
         "aim_height_ratio": 0.2,
         "hold_button": "x2",
@@ -325,8 +326,11 @@ def aimbot(ENABLE_AIMBOT=True):
                     dy = target[1] - cross_y
                     dz = CFG.get("deadzone", 2)
                     if abs(dx) >= dz or abs(dy) >= dz:
-                        spd = CFG.get("aim_speed", 0.8)
-                        move_relative(dx * spd, dy * spd)
+                        spd = CFG.get("aim_speed", 0.35)
+                        mx = CFG.get("max_step", 25)
+                        sx = max(-mx, min(mx, dx * spd))
+                        sy = max(-mx, min(mx, dy * spd))
+                        move_relative(sx, sy)
             else:
                 last_tx, last_ty = None, None
 
