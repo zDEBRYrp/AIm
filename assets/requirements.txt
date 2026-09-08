@@ -1,11 +1,8 @@
 pywin32
-imutils
 mss
 numpy
 opencv-python>=4.8,<5.0
 pynput
-six
 termcolor
-colored
 keyboard
-mouse
+ultralytics

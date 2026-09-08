@@ -8,7 +8,7 @@
 
 <h4 align="center">AIm uses real-time object detection with neural networks to recognize human-like patterns and aim at targets. It never accesses game memory — only captures the screen and controls the mouse on behalf of the user.</h4>
 
-<h6 align="center">This is a fork of <a href="https://github.com/McDaived/AIMi">McDaived/AIMi</a> — improved and renamed.</h6>
+<h6 align="center">Fork of <a href="https://github.com/McDaived/AIMi">McDaived/AIMi</a> — modernized and improved.</h6>
 
   <p align="center">
 <img src="https://github.com/McDaived/AIMi/assets/18085492/9e53d002-80ec-472b-9156-5416a061790e" alt="Your Image Description" width="500">
@@ -20,6 +20,16 @@
 **AIm** — composite name: **AI** (neural network) + **m** (makes it AIM).
 > If you want to clarify: "AI Aim - AIm"
 
+
+## What's new (v2 - 2026)
+- **YOLOv8n** instead of YOLOv3-tiny — faster, more accurate, 80 object classes
+- **ultralytics** pipeline — auto NMS, auto model download, GPU/CPU auto-detect
+- **mss** screen capture — replaced raw Win32 API calls
+- Removed dead code and deprecated libraries
+- Fixed multiple bugs (deprecations, missing imports)
+- Python 3.10+ support
+
+
 ## Features
 - (F1) Aimbot: Always On / Hold Mode
 - (Mouse4) Hold Mode: Press / Release
@@ -28,13 +38,13 @@
 
 
 ## Requirements
-- Python 3.8+
-- Windows (uses Win32 API for screen capture and mouse input)
-- No RTX required — works on CPU (OpenCL accelerated)
+- Python 3.10+
+- Windows (uses Win32 API for mouse input)
+- No RTX required — works on CPU
 
 
 ## How to use
-1. Download [Python](https://www.python.org/) (latest version recommended)
+1. Download [Python](https://www.python.org/) (3.10+)
 2. Clone or download this repo
 3. **Disable** Enhance Pointer Precision: `Mouse Properties` → `Pointer Options` → uncheck
 4. **Disable RAW INPUT** in your game (if available)
@@ -42,7 +52,7 @@
 ```
 python start.py
 ```
-Dependencies install automatically on first run.
+Dependencies install automatically on first run. YOLOv8n model (~6MB) downloads on first launch.
 
 
 ## Settings
@@ -54,24 +64,13 @@ CSGO-YE93T-V6tTU-Cxa9r-jCf7s-2XJaA
 ```
 
 ### Stretch Screen (Optional)
-Edit `lib/detect.py`, line 70:
-```py
-origbox = (int(Wd/3.1 - ACTIVATION_RANGE/4),
-           int(Hd/2.5 - ACTIVATION_RANGE/4),
-           int(Wd/4 + ACTIVATION_RANGE/1),
-           int(Hd/2 + ACTIVATION_RANGE/2))
-```
+Edit `lib/detect.py`, the `ACTIVATION_RANGE` and `origbox` calculation.
 
 ### Change Hotkey
-Edit `lib/detect.py`, line 118:
-```py
-if button == button.x2:  # Change to button.left for left click
-```
+Edit `lib/detect.py`, the `on_click` function (line ~79).
 
 
 ## Known Issues
-
-**[WARN:0@x.xxx]** — OpenCV warning about CUDA. It switches to CPU automatically. Safe to ignore.
 
 **Aiming at the ground** — Disable raw input + enhance pointer precision.
 
@@ -84,16 +83,16 @@ if button == button.x2:  # Change to button.left for left click
 - Never accesses game memory — invisible to most anti-cheat
 - Abstracts capabilities to many FPS games without code modifications
 
-### YOLOv3-tiny
-Trained on a combination of video game images and the **COCO** dataset. Optimized to recognize human-like objects quickly.
+### YOLOv8 (ultralytics)
+Trained on COCO dataset (80 classes including person). Optimized for real-time detection.
 
-### OpenCV
-Screen capture and GPU acceleration via CUDA / OpenCL.
+### Screen Capture
+Uses `mss` for fast screen region capture with minimal CPU overhead.
 
 
 ## Credits
 - Original project: [McDaived/AIMi](https://github.com/McDaived/AIMi) — MIT License
-- Fork & improvements: **zDEBRYrp**
+- Fork & modernization: **zDEBRYrp**
 
 
 ## License
