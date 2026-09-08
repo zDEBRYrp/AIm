@@ -4,14 +4,12 @@ subprocess.call(["pip", "install", "-r", "assets/requirements.txt"])
 from utils import inputs
 os.system('cls' if os.name == 'nt' else 'clear')
 print(r'''
-  /$$$$$$  /$$$$$$ /$$      /$$ /$$
- /$$__  $$|_  $$_/| $$$    /$$$|__/
-| $$  \ $$  | $$  | $$$$  /$$$$ /$$
-| $$$$$$$$  | $$  | $$ $$/$$ $$| $$
-| $$__  $$  | $$  | $$  $$$| $$| $$
-| $$  | $$  | $$  | $$\  $ | $$| $$
-| $$  | $$ /$$$$$$| $$ \/  | $$| $$
-|__/  |__/|______/|__/     |__/|__/
+    _    ____   _____
+   / \  |  _ \ / ____|
+  / _ \ | |_) | |
+ / ___ \|  _ <| |___
+/_/   \_\_| \_\\_____|
+   AI + m = AIm
 ''')
 print('\033[1;35m[Control] ->','\033[1;34m[F1] Aimbot: Always On/Hold Mode')
 print('\033[1;35m          ->','\033[1;34m[Mouse4] Hold Mode: Press/Release')

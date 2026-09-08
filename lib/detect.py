@@ -15,7 +15,7 @@ import pynput
 import keyboard
 from pynput.mouse import Listener
 import winsound
-sct = mss.mss()
+sct = mss.MSS()
 Wd, Hd = sct.monitors[1]["width"], sct.monitors[1]["height"]
 SendInput = ctypes.windll.user32.SendInput
 
@@ -58,9 +58,16 @@ def aimbot(ENABLE_AIMBOT):
     time.sleep(0.4)
     
     print("\033[1;36m[Status] loading objects detector..")
-    net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)#load objects detector
-    net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-    net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+    net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
+    build_info = str("".join(cv2.getBuildInformation().split()))
+    if "CUDA:YES" in build_info:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+        print(colored("[GPU] CUDA backend enabled..", "green"))
+    else:
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+        print(colored("[CPU] Running on CPU (CUDA not available)..", "yellow"))
     ln = net.getLayerNames()
     ln = [ln[i - 1] for i in net.getUnconnectedOutLayers()]
 
@@ -84,19 +91,12 @@ def aimbot(ENABLE_AIMBOT):
         sys.exit(0)
     signal.signal(signal.SIGINT, signal_handler)
 
-    build_info = str("".join(cv2.getBuildInformation().split()))#check if cpu and gpu cuda is working or disable.
     if cv2.ocl.haveOpenCL():
         cv2.ocl.setUseOpenCL(True)
         cv2.ocl.useOpenCL()
         print(colored("[CPU] OpenCL is enabled..", "green"))
     else:
-        print(
-            colored("[WARNING-CPU] OpenCL is disabled..", "yellow"))
-    if "CUDA:YES" in build_info:
-        print(colored("[GPU] CUDA is enabled..", "green"))
-    else:
-        print(
-            colored("[WARNING-GPU] CUDA is disabled..", "yellow"))
+        print(colored("[WARNING-CPU] OpenCL is disabled..", "yellow"))
 
     print()
     
@@ -177,7 +177,7 @@ def aimbot(ENABLE_AIMBOT):
                     mouseY = origbox[1] + (y + h/5)
                     position(mouseX, mouseY)
 
-        cv2.imshow("Gui Objects Detector", frame)
+        cv2.imshow("AIm - Objects Detector", frame)
         elapsed = timeit.default_timer() - start_time
         sys.stdout.write(
             "\033[1;33m\rFPS:{1} MS:{0}\t".format(int(elapsed*1000), int(1/elapsed)))
