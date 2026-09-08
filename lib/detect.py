@@ -342,7 +342,10 @@ def aimbot(ENABLE_AIMBOT=True):
         return getattr(_Btn, CFG.get("hold_button", "x2"), _Btn.x2)
 
     def setup_hotkeys():
-        keyboard.clear_all_hotkeys()
+        try:
+            keyboard.clear_all_hotkeys()
+        except Exception:
+            pass
         keyboard.add_hotkey(CFG.get("toggle_hotkey", "F1"), toggle_aimbot)
         keyboard.add_hotkey("8", open_settings)
 
