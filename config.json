@@ -9,5 +9,6 @@
     "hold_button": "x2",
     "toggle_hotkey": "F1",
     "easing": 0.4,
+    "fps_counter": true,
     "monitor": "primary"
 }

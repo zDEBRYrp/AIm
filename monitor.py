@@ -42,6 +42,8 @@ COCO_NAMES = {
     79: "toothbrush",
 }
 
+SHOW_FPS = "--no-fps" not in sys.argv
+
 COLORS = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 0, 255),
           (255, 255, 0), (0, 128, 255), (255, 128, 0), (128, 255, 0)]
 
@@ -192,11 +194,12 @@ def main():
                 cx, cy = (x1 + x2) // 2, y1
                 cv2.circle(frame, (cx, cy), 4, (0, 0, 255), -1)
 
-        fps_text = f"FPS: {fps}"
-        (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
-        fx = img_w - tw - 12
-        fy = th + 10
-        cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
+        if SHOW_FPS:
+            fps_text = f"FPS: {fps}"
+            (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
+            fx = img_w - tw - 12
+            fy = th + 10
+            cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
 
         cv2.imshow("AIm Monitor", frame)
 

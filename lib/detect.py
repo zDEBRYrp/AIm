@@ -47,6 +47,7 @@ DEFAULT_CONFIG = {
     "hold_button": "x2",
     "toggle_hotkey": "F1",
     "easing": 0.4,
+    "fps_counter": True,
     "monitor": "primary",
 }
 
@@ -61,6 +62,7 @@ SETTING_ITEMS = [
     ("H", "hold_button", "Кнопка hold (x2/left/right)", "кнопка аима в hold-режиме"),
     ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)", "переключение always/hold"),
     ("E", "easing", "Плавность (0.1-1.0)", "1.0=мгновенно, 0.1=очень плавно"),
+    ("F", "fps_counter", "Счётчик FPS (y/n)", "показывать FPS в углу экрана"),
     ("M", "monitor", "Монитор (primary или 0/1/...)", "экран, где запущена игра"),
 ]
 
@@ -113,6 +115,13 @@ def coerce_value(key, text):
         if key == "easing":
             v = float(t)
             return (True, v, "") if 0.1 <= v <= 1.0 else (False, None, "Диапазон 0.1-1.0")
+        if key == "fps_counter":
+            v = t.lower()
+            if v in ("y", "yes", "true", "1", "on"):
+                return (True, True, "")
+            if v in ("n", "no", "false", "0", "off"):
+                return (True, False, "")
+            return (False, None, "Введи y/n")
         if key == "hold_button":
             v = t.lower()
             return (True, v, "") if v in ("x2", "left", "right") else (False, None, "Используй x2 / left / right")
@@ -553,11 +562,12 @@ def aimbot(ENABLE_AIMBOT=True):
             else:
                 last_tx, last_ty = None, None
 
-            fps_text = f"FPS: {fps}"
-            (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
-            fx = img_w - tw - 12
-            fy = th + 10
-            cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
+            if CFG.get("fps_counter", True):
+                fps_text = f"FPS: {fps}"
+                (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
+                fx = img_w - tw - 12
+                fy = th + 10
+                cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
 
             cv2.imshow(WINDOW_NAME, frame)
 
