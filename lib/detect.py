@@ -46,6 +46,7 @@ DEFAULT_CONFIG = {
     "aim_height_ratio": 0.2,
     "hold_button": "x2",
     "toggle_hotkey": "F1",
+    "easing": 0.4,
     "monitor": "primary",
 }
 
@@ -59,6 +60,7 @@ SETTING_ITEMS = [
     ("7", "aim_height_ratio", "Высота прицела 0-1 (0.2=голова)", "0 верх бокса, 1 низ"),
     ("H", "hold_button", "Кнопка hold (x2/left/right)", "кнопка аима в hold-режиме"),
     ("T", "toggle_hotkey", "Хоткей переключения (напр. F1)", "переключение always/hold"),
+    ("E", "easing", "Плавность (0.1-1.0)", "1.0=мгновенно, 0.1=очень плавно"),
     ("M", "monitor", "Монитор (primary или 0/1/...)", "экран, где запущена игра"),
 ]
 
@@ -108,6 +110,9 @@ def coerce_value(key, text):
         if key == "aim_height_ratio":
             v = float(t)
             return (True, v, "") if 0.0 <= v <= 1.0 else (False, None, "Диапазон 0.0-1.0")
+        if key == "easing":
+            v = float(t)
+            return (True, v, "") if 0.1 <= v <= 1.0 else (False, None, "Диапазон 0.1-1.0")
         if key == "hold_button":
             v = t.lower()
             return (True, v, "") if v in ("x2", "left", "right") else (False, None, "Используй x2 / left / right")
@@ -541,11 +546,18 @@ def aimbot(ENABLE_AIMBOT=True):
                     if abs(dx) >= dz or abs(dy) >= dz:
                         spd = CFG.get("aim_speed", 0.35)
                         mx = CFG.get("max_step", 25)
-                        sx = max(-mx, min(mx, dx * spd))
-                        sy = max(-mx, min(mx, dy * spd))
+                        ease = CFG.get("easing", 0.4)
+                        sx = max(-mx, min(mx, dx * spd * ease))
+                        sy = max(-mx, min(mx, dy * spd * ease))
                         move_relative(sx, sy)
             else:
                 last_tx, last_ty = None, None
+
+            fps_text = f"FPS: {fps}"
+            (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
+            fx = img_w - tw - 12
+            fy = th + 10
+            cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
 
             cv2.imshow(WINDOW_NAME, frame)
 

@@ -13,6 +13,7 @@ import onnxruntime as ort
 import os
 import sys
 import mss
+import time
 import signal
 import subprocess
 
@@ -158,6 +159,9 @@ def main():
     cv2.namedWindow("AIm Monitor", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("AIm Monitor", min(region["width"], 1280), min(region["height"], 720))
 
+    prev_time = time.perf_counter()
+    fps = 0
+
     while True:
         frame = np.array(capture.grab(region))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
@@ -188,10 +192,18 @@ def main():
                 cx, cy = (x1 + x2) // 2, y1
                 cv2.circle(frame, (cx, cy), 4, (0, 0, 255), -1)
 
-        fps_text = "YOLOv8n Monitor"
-        cv2.putText(frame, fps_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        fps_text = f"FPS: {fps}"
+        (tw, th), _ = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_PLAIN, 1.2, 2)
+        fx = img_w - tw - 12
+        fy = th + 10
+        cv2.putText(frame, fps_text, (fx, fy), cv2.FONT_HERSHEY_PLAIN, 1.2, (0, 200, 0), 2, cv2.LINE_AA)
 
         cv2.imshow("AIm Monitor", frame)
+
+        now = time.perf_counter()
+        elapsed = now - prev_time
+        prev_time = now
+        fps = int(1 / elapsed) if elapsed > 0 else 0
 
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
