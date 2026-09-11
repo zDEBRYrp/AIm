@@ -29,7 +29,11 @@ MODELS = [
     ("1", "YOLOv8n", "yolov8n"),
     ("2", "YOLO11n", "yolo11n"),
     ("3", "YOLO26n", "yolo26n"),
+    ("4", "PHD-Head", "yolov11_phd_s"),
 ]
+
+PHD_URL = "https://huggingface.co/Sharath33/Person/resolve/main/yolov11_phd_s.onnx"
+PHD_NAMES = {0: "person", 1: "head"}
 
 COCO_NAMES = {
     0: "person", 1: "bicycle", 2: "car", 3: "motorcycle", 4: "airplane", 5: "bus",
@@ -59,6 +63,13 @@ def export_to_onnx(pt_name):
     onnx_path = os.path.join(MODELS_DIR, f"{pt_name}.onnx")
     if os.path.exists(onnx_path):
         return onnx_path
+
+    if pt_name == "yolov11_phd_s":
+        print(f"  Скачиваю PHD Head Detection с Hugging Face...")
+        import urllib.request
+        urllib.request.urlretrieve(PHD_URL, onnx_path)
+        return onnx_path
+
     print(f"  Скачиваю и экспортирую {pt_name}...")
     subprocess.call([sys.executable, "-m", "pip", "install", "ultralytics"],
                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -103,7 +114,7 @@ def postprocess(output, img_w, img_h, conf_thresh, iou_thresh):
 
 def main():
     print("Тест моделей YOLO — визуальное сравнение")
-    print("Переключение: 1=YOLOv8n  2=YOLO11n  3=YOLO26n")
+    print("Переключение: 1=YOLOv8n  2=YOLO11n  3=YOLO26n  4=PHD-Head")
     print("q — выход\n")
 
     sct = mss.MSS()
@@ -175,6 +186,8 @@ def main():
             color = COLORS[cls % len(COLORS)]
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             name = COCO_NAMES.get(cls, str(cls))
+            if m["name"] == "PHD-Head":
+                name = PHD_NAMES.get(cls, str(cls))
             label = f"{name} {int(sc * 100)}%"
             (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             cv2.rectangle(frame, (x1, y1 - th - 8), (x1 + tw + 4, y1), color, -1)
