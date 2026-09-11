@@ -106,21 +106,21 @@ def main():
     print("Переключение: 1=YOLOv8n  2=YOLO11n  3=YOLO26n")
     print("q — выход\n")
 
-    sct = mss.mss()
+    sct = mss.MSS()
     monitors = sct.monitors[1:]
     if not monitors:
         print("Мониторы не найдены!")
         return
 
     for i, m in enumerate(monitors):
-        tag = " [ОСНОВНОЙ]" if m["primary"] else ""
+        tag = " [ОСНОВНОЙ]" if m.get("is_primary") else ""
         print(f"  [{i}] {m['width']}x{m['height']}{tag}")
 
     choice = input("Монитор > ").strip()
     try:
         region = monitors[int(choice)]
     except (ValueError, IndexError):
-        region = next((m for m in monitors if m["primary"]), monitors[0])
+        region = next((m for m in monitors if m.get("is_primary")), monitors[0])
 
     print(f"\nЗагрузка моделей...")
     os.makedirs(MODELS_DIR, exist_ok=True)

@@ -117,7 +117,7 @@ def postprocess(output, img_w, img_h, conf_thresh, iou_thresh):
 def main():
     print("\033[1;36m" + BANNER + "\033[0m")
 
-    sct = mss.mss()
+    sct = mss.MSS()
     monitors = sct.monitors[1:]
     if not monitors:
         print("\033[1;91m[Монитор] Мониторы не найдены!")

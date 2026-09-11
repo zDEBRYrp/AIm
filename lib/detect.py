@@ -160,7 +160,7 @@ def _select_monitor():
     if isinstance(choice, int):
         set_monitor(choice)
     for m in list_monitors():
-        tag = " [ОСНОВНОЙ]" if m["primary"] else ""
+        tag = " [ОСНОВНОЙ]" if m.get("is_primary") else ""
         print(f"\033[1;36m[Монитор {m['index']}] {m['width']}x{m['height']} at ({m['left']},{m['top']}){tag}")
     Wd, Hd = get_screen_size()
     MON_X, MON_Y = get_monitor_origin()
@@ -451,7 +451,7 @@ def aimbot(ENABLE_AIMBOT=True):
                 from questionary import Choice
                 opts = [Choice("primary (auto)", value="primary")]
                 for m in list_monitors():
-                    tag = "PRIMARY" if m["primary"] else "secondary"
+                    tag = "PRIMARY" if m.get("is_primary") else "secondary"
                     opts.append(Choice(f"{m['index']}: {m['width']}x{m['height']} ({tag})", value=m["index"]))
                 val = questionary.select(f"{label} (now {cur}):", choices=opts).ask()
                 if val is None:
