@@ -215,7 +215,7 @@ def main():
         info = f"{m['name']} | {m['size']:.1f}MB | {infer_ms:.0f}ms | FPS:{fps} | det:{len(boxes)} | conf:{conf}"
         cv2.putText(frame, info, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-        hints = "1/2/3=model  c=conf  i=iou  q=quit"
+        hints = "1-6=model  c=conf  i=iou  q=quit"
         cv2.putText(frame, hints, (10, img_h - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
 
         cv2.imshow("YOLO Test", frame)
@@ -223,7 +223,7 @@ def main():
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             break
-        elif key in (ord("1"), ord("2"), ord("3")):
+        elif key in (ord("1"), ord("2"), ord("3"), ord("4"), ord("5"), ord("6")):
             k = chr(key)
             if k in sessions:
                 active = k
