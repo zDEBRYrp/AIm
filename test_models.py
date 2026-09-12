@@ -70,22 +70,18 @@ def export_to_onnx(pt_name):
     if os.path.exists(onnx_path):
         return onnx_path
 
-    if pt_name == "yolov11_phd_s":
-        print(f"  Скачиваю PHD Head Detection с Hugging Face...")
-        import urllib.request
-        urllib.request.urlretrieve(PHD_URL, onnx_path)
-        return onnx_path
-
-    if pt_name == "yolov8n_crowdhuman":
-        print(f"  Скачиваю YOLOv8n CrowdHuman...")
-        import urllib.request
-        urllib.request.urlretrieve(CROWD_V8_URL, onnx_path)
-        return onnx_path
-
-    if pt_name == "crowdhuman_yolov5m":
-        print(f"  Скачиваю YOLOv5m CrowdHuman...")
-        import urllib.request
-        urllib.request.urlretrieve(CROWD_V5_URL, onnx_path)
+    if pt_name in ("yolov11_phd_s", "yolov8n_crowdhuman", "crowdhuman_yolov5m"):
+        urls = {
+            "yolov11_phd_s": PHD_URL,
+            "yolov8n_crowdhuman": CROWD_V8_URL,
+            "crowdhuman_yolov5m": CROWD_V5_URL,
+        }
+        print(f"  Скачиваю {pt_name}...")
+        import subprocess
+        subprocess.run([
+            "powershell", "-Command",
+            f"Invoke-WebRequest -Uri '{urls[pt_name]}' -OutFile '{onnx_path}' -UseBasicParsing"
+        ], check=True)
         return onnx_path
 
     print(f"  Скачиваю и экспортирую {pt_name}...")
